@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding Invitation</title>
+    <style>
+        /* --- Basic Styles --- */
+        body {
+            background-color: #0a192f; /* Dark Navy Blue */
+            color: #e6f1ff; /* Off-white */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        .container {
+            background-color: #172a45; /* Slightly lighter navy */
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px -15px rgba(0,0,0,0.7);
+            width: 90%;
+            max-width: 500px;
+        }
+
+        h1, h2 {
+            color: #64ffda; /* Light Mint Green for accents */
+            margin-bottom: 25px;
+        }
+
+        /* --- Form Elements --- */
+        input[type="text"], input[type="password"], textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #304a6e;
+            border-radius: 5px;
+            background-color: #0a192f;
+            color: #e6f1ff;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: #64ffda;
+            color: #0a192f;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #a7ffeb;
+        }
+        
+        .radio-group label, .checkbox-group label {
+            display: block;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        
+        .error {
+            color: #ff7979;
+            margin-bottom: 15px;
+        }
+
+        /* Hide elements by default */
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    {% if password_required %}
+    <div id="password-section">
+        <h1>Please Enter Password</h1>
+        <form action="/verify" method="post">
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Enter</button>
+            {% if error %}
+                <p class="error">{{ error }}</p>
+            {% endif %}
+        </form>
+    </div>
+    {% else %}
+    <div id="main-content">
+        <div id="question-name" class="question-card">
+            <h1>You're Invited!</h1>
+            <h2>Please find your name on the list.</h2>
+            <input type="text" id="name-input" list="guest-list" placeholder="Type your name...">
+            <datalist id="guest-list"></datalist>
+            <p id="name-error" class="error hidden">Please select a valid name from the list.</p>
+            <button onclick="nextQuestion()">Next</button>
+        </div>
+
+        <div id="question-attending" class="question-card hidden">
+            <h2>Will you be able to join us?</h2>
+            <div class="radio-group">
+                <label><input type="radio" name="attending" value="Yes" checked> Yes, with pleasure!</label>
+                <label><input type="radio" name="attending" value="No"> No, we'll be celebrating from afar.</label>
+            </div>
+            <button onclick="nextQuestion()">Next</button>
+        </div>
+        
+        <div id="question-chocolate" class="question-card hidden">
+            <h2>What kind of chocolate do you enjoy?</h2>
+            <div class="checkbox-group">
+                <label><input type="checkbox" name="chocolate" value="Dark"> Dark Chocolate</label>
+                <label><input type="checkbox" name="chocolate" value="Milk"> Milk Chocolate</label>
+                <label><input type="checkbox" name="chocolate" value="White"> White Chocolate</label>
+                <label><input type="checkbox" name="chocolate" value="None"> I'm not a fan</label>
+            </div>
+            <button onclick="nextQuestion()">Next</button>
+        </div>
+
+        <div id="question-wine" class="question-card hidden">
+            <h2>Wine Preference?</h2>
+            <div class="radio-group">
+                <label><input type="radio" name="wine" value="Red" checked> Red</label>
+                <label><input type="radio" name="wine" value="White"> White</label>
+                <label><input type="radio" name="wine" value="None"> None for me</label>
+            </div>
+            <button onclick="nextQuestion()">Next</button>
+        </div>
+
+        <div id="question-meal" class="question-card hidden">
+            <h2>Meal Preferences</h2>
+            <p>Please select a meal for each member of your party.</p>
+            <div id="meal-inputs"></div>
+            <button onclick="nextQuestion()">Next</button>
+        </div>
+
+        <div id="question-notes" class="question-card hidden">
+            <h2>Anything else to add?</h2>
+            <p>Allergies, song requests, etc.</p>
+            <textarea id="notes-input" rows="4" placeholder="Your notes here..."></textarea>
+            <button onclick="submitRSVP()">Submit RSVP</button>
+        </div>
+
+        <div id="thank-you" class="hidden">
+            <h1>Thank You!</h1>
+            <p>Your RSVP has been recorded. We can't wait to celebrate with you!</p>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+    // Only run the script if the main content is present (i.e., password was correct)
+    if (document.getElementById('main-content')) {
+        
+        // --- State Management ---
+        const rsvpData = {};
+        const questionCards = document.querySelectorAll('.question-card');
+        let currentQuestionIndex = 0;
+        let guests = [];
+
+        // --- Fetch Guest List on Page Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/api/guests')
+                .then(response => response.json())
+                .then(data => {
+                    guests = data;
+                    const dataList = document.getElementById('guest-list');
+                    guests.forEach(guest => {
+                        const option = document.createElement('option');
+                        option.value = guest.name;
+                        dataList.appendChild(option);
+                    });
+                });
+        });
+
+        function nextQuestion() {
+            // --- 1. Save the answer from the current question ---
+            const currentCard = questionCards[currentQuestionIndex];
+            const cardId = currentCard.id;
+
+            if (cardId === 'question-name') {
+                const nameInput = document.getElementById('name-input');
+                const selectedGuest = guests.find(g => g.name === nameInput.value);
+                if (!selectedGuest) {
+                    document.getElementById('name-error').classList.remove('hidden');
+                    return;
+                }
+                document.getElementById('name-error').classList.add('hidden');
+                rsvpData.name = selectedGuest.name;
+                rsvpData.guest_count = selectedGuest.guest_count;
+
+            } else if (cardId === 'question-attending') {
+                rsvpData.attending = document.querySelector('input[name="attending"]:checked').value;
+                // If not attending, skip to the last question (notes)
+                if (rsvpData.attending === 'No') {
+                    // Set default values for skipped questions
+                    rsvpData.chocolate = "N/A";
+                    rsvpData.wine = "N/A";
+                    rsvpData.mealPreferences = ["N/A"];
+                    // Jump to the notes question (index 4 is meals, index 5 is notes)
+                    currentQuestionIndex = 4;
+                }
+
+            } else if (cardId === 'question-chocolate') {
+                const checkedBoxes = document.querySelectorAll('input[name="chocolate"]:checked');
+                rsvpData.chocolate = Array.from(checkedBoxes).map(cb => cb.value).join(', ');
+
+            } else if (cardId === 'question-wine') {
+                rsvpData.wine = document.querySelector('input[name="wine"]:checked').value;
+            
+            } else if (cardId === 'question-meal') {
+                const mealInputs = document.querySelectorAll('.meal-preference');
+                rsvpData.mealPreferences = Array.from(mealInputs).map(input => input.value);
+            }
+
+            // --- 2. Hide current question, show next ---
+            currentCard.classList.add('hidden');
+            currentQuestionIndex++;
+            const nextCard = questionCards[currentQuestionIndex];
+
+            // --- 3. Prepare the next question (if needed) ---
+            if (nextCard.id === 'question-meal') {
+                generateMealInputs(rsvpData.guest_count);
+            }
+            
+            nextCard.classList.remove('hidden');
+        }
+
+        function generateMealInputs(count) {
+            const container = document.getElementById('meal-inputs');
+            container.innerHTML = ''; // Clear previous inputs
+            for (let i = 1; i <= count; i++) {
+                const guestLabel = document.createElement('label');
+                guestLabel.textContent = `Guest ${i} Meal Choice:`;
+                guestLabel.style.display = 'block';
+                guestLabel.style.marginTop = '10px';
+                
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.placeholder = 'e.g., Chicken, Fish, Vegan';
+                input.className = 'meal-preference';
+                input.required = true;
+                
+                container.appendChild(guestLabel);
+                container.appendChild(input);
+            }
+        }
+
+        function submitRSVP() {
+            // Save the last answer (notes)
+            rsvpData.notes = document.getElementById('notes-input').value || "None";
+            
+            console.log("Final RSVP Data:", rsvpData);
+
+            // Hide the last question
+            questionCards[currentQuestionIndex].classList.add('hidden');
+
+            // Show a temporary loading message if needed
+            const thankYouSection = document.getElementById('thank-you');
+            thankYouSection.classList.remove('hidden');
+            thankYouSection.querySelector('p').textContent = "Submitting, please wait...";
+
+            // --- 4. Send data to the backend ---
+            fetch('/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(rsvpData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.success) {
+                    thankYouSection.querySelector('h1').textContent = "Thank You!";
+                    thankYouSection.querySelector('p').textContent = data.message;
+                } else {
+                    thankYouSection.querySelector('h1').textContent = "Error";
+                    thankYouSection.querySelector('p').textContent = "Something went wrong. Please try again later. " + data.error;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                thankYouSection.querySelector('h1').textContent = "Error";
+                thankYouSection.querySelector('p').textContent = "A network error occurred. Please try again later.";
+            });
+        }
+    }
+</script>
+
+</body>
+</html>

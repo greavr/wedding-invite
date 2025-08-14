@@ -1,0 +1,18 @@
+[
+  {
+    "name": "Alice and Bob Smith",
+    "guest_count": 2
+  },
+  {
+    "name": "Charlie Davis",
+    "guest_count": 1
+  },
+  {
+    "name": "Diana and Eve Miller",
+    "guest_count": 2
+  },
+  {
+    "name": "Frank Wright & Family",
+    "guest_count": 4
+  }
+]
