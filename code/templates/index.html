@@ -7,8 +7,8 @@
     <style>
         /* --- Basic Styles --- */
         body {
-            background-color: #0a192f; /* Dark Navy Blue */
-            color: #e6f1ff; /* Off-white */
+            background-color: #0a192f; /* Fallback color */
+            color: #ffffff; /* White text */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             display: flex;
             justify-content: center;
@@ -16,36 +16,45 @@
             min-height: 100vh;
             margin: 0;
             text-align: center;
+            
+            /* --- Background Image Styles --- */
+            background-image: url('/static/background.png');
+            background-size: cover; /* Ensures the image covers the whole page */
+            background-position: center center; /* Centers the image */
+            background-repeat: no-repeat; /* Prevents the image from tiling */
+            background-attachment: fixed; /* Makes the background stay in place on scroll */
         }
 
         .container {
-            background-color: #172a45; /* Slightly lighter navy */
+            background-color: rgba(23, 42, 69, 0.9); /* Slightly lighter navy with some transparency */
             padding: 40px;
             border-radius: 10px;
             box-shadow: 0 10px 30px -15px rgba(0,0,0,0.7);
             width: 90%;
-            max-width: 500px;
+            max-width: 650px; /* Increased max-width to accommodate the new layout */
+            z-index: 1; /* Ensure container is above background pattern */
         }
 
         h1, h2 {
-            color: #64ffda; /* Light Mint Green for accents */
+            color: rgb(252, 228, 194);
             margin-bottom: 25px;
         }
 
         /* --- Form Elements --- */
         input[type="text"], input[type="password"], textarea {
-            width: calc(100% - 20px);
+            box-sizing: border-box;
+            width: 100%;
             padding: 10px;
             margin-bottom: 20px;
             border: 1px solid #304a6e;
             border-radius: 5px;
             background-color: #0a192f;
-            color: #e6f1ff;
+            color: #ffffff;
             font-size: 1rem;
         }
 
         button {
-            background-color: #64ffda;
+            background-color: #ffffff;
             color: #0a192f;
             border: none;
             padding: 12px 25px;
@@ -56,18 +65,98 @@
             transition: background-color 0.3s;
         }
         button:hover {
-            background-color: #a7ffeb;
+            background-color: #e6f1ff;
         }
         
         .radio-group label, .checkbox-group label {
             display: block;
             margin: 10px 0;
             cursor: pointer;
+            color: #ffffff;
         }
         
         .error {
             color: #ff7979;
             margin-bottom: 15px;
+        }
+
+        /* --- Autocomplete Styles --- */
+        .autocomplete-container {
+            position: relative;
+        }
+        .autocomplete-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #172a45;
+            border: 1px solid #304a6e;
+            border-radius: 0 0 5px 5px;
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 10;
+        }
+        .autocomplete-item {
+            padding: 10px;
+            cursor: pointer;
+            text-align: left;
+        }
+        .autocomplete-item:hover {
+            background-color: #304a6e;
+        }
+
+        /* --- Meal Question Layout --- */
+        .meal-layout-container {
+            display: flex;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            gap: 25px; /* Space between inputs and menu */
+            margin-bottom: 20px; /* Space before the 'Next' button */
+            align-items: flex-start;
+        }
+
+        .meal-inputs-column {
+            flex: 1.5; /* Give menu more relative space */
+            min-width: 200px;
+            text-align: left;
+        }
+
+        .menu-box {
+            flex: 1; /* Takes up less space */
+            min-width: 200px;
+            background-color: #0a192f; /* Same as input background */
+            border: 1px solid #304a6e;
+            border-radius: 5px;
+            padding: 15px 20px;
+            text-align: left;
+        }
+
+        .menu-box h3 {
+            margin-top: 0;
+            color: #ffffff;
+            border-bottom: 1px solid #304a6e;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .menu-box ul {
+            list-style-type: disc; /* Use disc for bullet points */
+            padding-left: 20px;    /* Add space for the bullets */
+            margin: 0;
+            color: white;          /* Ensure bullet color is white */
+        }
+
+        .menu-box li {
+            margin-bottom: 15px;
+            line-height: 1.4;
+        }
+
+        .menu-box li:last-child {
+            margin-bottom: 0;
+        }
+        
+        .menu-box strong {
+            color: #e6f1ff;
         }
 
         /* Hide elements by default */
@@ -95,8 +184,10 @@
         <div id="question-name" class="question-card">
             <h1>You're Invited!</h1>
             <h2>Please find your name on the list.</h2>
-            <input type="text" id="name-input" list="guest-list" placeholder="Type your name...">
-            <datalist id="guest-list"></datalist>
+            <div class="autocomplete-container">
+                <input type="text" id="name-input" placeholder="Type your name..." autocomplete="off">
+                <div id="autocomplete-results" class="autocomplete-results"></div>
+            </div>
             <p id="name-error" class="error hidden">Please select a valid name from the list.</p>
             <button onclick="nextQuestion()">Next</button>
         </div>
@@ -112,11 +203,9 @@
         
         <div id="question-chocolate" class="question-card hidden">
             <h2>What kind of chocolate do you enjoy?</h2>
-            <div class="checkbox-group">
-                <label><input type="checkbox" name="chocolate" value="Dark"> Dark Chocolate</label>
-                <label><input type="checkbox" name="chocolate" value="Milk"> Milk Chocolate</label>
-                <label><input type="checkbox" name="chocolate" value="White"> White Chocolate</label>
-                <label><input type="checkbox" name="chocolate" value="None"> I'm not a fan</label>
+            <p>Please select choices for each member of your party.</p>
+            <div id="chocolate-inputs" style="margin-bottom: 20px;">
+                <!-- JavaScript will generate content here -->
             </div>
             <button onclick="nextQuestion()">Next</button>
         </div>
@@ -133,8 +222,45 @@
 
         <div id="question-meal" class="question-card hidden">
             <h2>Meal Preferences</h2>
-            <p>Please select a meal for each member of your party.</p>
-            <div id="meal-inputs"></div>
+            <p>Please enter a choice for each member of your party.</p>
+            
+            <div class="meal-layout-container">
+                <div class="meal-inputs-column">
+                    <div id="meal-inputs">
+                        </div>
+                </div>
+
+                <div class="menu-box">
+                    <h3>Wedding Menu</h3>
+                    <ul>
+                        <li>
+                            <strong>First</strong><br />
+                            Mixed Lettuce Caesar<br />
+                            <i>parmesan, mollica, preserved lemon</i>
+                        </li>
+                        <li>
+                            <strong>Second (option)</strong><br>
+                            <ul>
+                                <li><strong>Grilled Ribeye</strong><br />
+                                <i>pomme purée, roasted mushrooms, glazed peral onion, béarnaise sauce</i><br /><br />or<br /><br /></li>
+                                <li><strong>Grilled Alaskan Salmon</strong><br />
+                                <i>roasted cauliflower, rice pilaf, lemon caper sauce</i><br /><br />or<br /><br /></li>
+                                <li><strong>Roasted Butternut Squash (Veg)</strong>
+                                <i>cocnut curry, quinoa, crispy chickpeas, pepper salad</i></li>                            
+                            </ul>
+                        </li>
+                        <li>
+                            <strong>Desert</strong><br>
+                            Seasonal Warm Bread Pudding<br />
+                            <i>vanilla gelato, candided nuts</i>>
+                        </li>
+                        <li>
+                            <strong>Chldrens Menu</strong><br>
+                            Breaded Chicken, or Tomato pasta
+                        </li>
+                    </ul>
+                </div>
+            </div>
             <button onclick="nextQuestion()">Next</button>
         </div>
 
@@ -155,37 +281,70 @@
 </div>
 
 <script>
-    // Only run the script if the main content is present (i.e., password was correct)
     if (document.getElementById('main-content')) {
         
-        // --- State Management ---
         const rsvpData = {};
         const questionCards = document.querySelectorAll('.question-card');
         let currentQuestionIndex = 0;
         let guests = [];
 
-        // --- Fetch Guest List on Page Load ---
+        // --- Autocomplete Setup ---
+        const nameInput = document.getElementById('name-input');
+        const resultsContainer = document.getElementById('autocomplete-results');
+
+        // --- Fetch Guest List and Setup Autocomplete ---
         document.addEventListener('DOMContentLoaded', () => {
             fetch('/api/guests')
                 .then(response => response.json())
                 .then(data => {
                     guests = data;
-                    const dataList = document.getElementById('guest-list');
-                    guests.forEach(guest => {
-                        const option = document.createElement('option');
-                        option.value = guest.name;
-                        dataList.appendChild(option);
-                    });
                 });
         });
 
+        nameInput.addEventListener('input', () => {
+            const value = nameInput.value.toLowerCase();
+            resultsContainer.innerHTML = ''; // Clear previous results
+            if (!value) {
+                resultsContainer.classList.add('hidden');
+                return;
+            }
+
+            const filteredGuests = guests.filter(guest => 
+                guest.name.toLowerCase().startsWith(value)
+            );
+
+            if (filteredGuests.length > 0) {
+                resultsContainer.classList.remove('hidden');
+                filteredGuests.forEach(guest => {
+                    const item = document.createElement('div');
+                    item.className = 'autocomplete-item';
+                    item.textContent = guest.name;
+                    item.addEventListener('click', () => {
+                        nameInput.value = guest.name;
+                        resultsContainer.innerHTML = '';
+                        resultsContainer.classList.add('hidden');
+                    });
+                    resultsContainer.appendChild(item);
+                });
+            } else {
+                resultsContainer.classList.add('hidden');
+            }
+        });
+
+        // Hide autocomplete if user clicks elsewhere
+        document.addEventListener('click', function(event) {
+            if (!event.target.closest('.autocomplete-container')) {
+                resultsContainer.innerHTML = '';
+                resultsContainer.classList.add('hidden');
+            }
+        });
+
+        // --- Question Logic ---
         function nextQuestion() {
-            // --- 1. Save the answer from the current question ---
             const currentCard = questionCards[currentQuestionIndex];
             const cardId = currentCard.id;
 
             if (cardId === 'question-name') {
-                const nameInput = document.getElementById('name-input');
                 const selectedGuest = guests.find(g => g.name === nameInput.value);
                 if (!selectedGuest) {
                     document.getElementById('name-error').classList.remove('hidden');
@@ -194,79 +353,206 @@
                 document.getElementById('name-error').classList.add('hidden');
                 rsvpData.name = selectedGuest.name;
                 rsvpData.guest_count = selectedGuest.guest_count;
+                rsvpData.names = selectedGuest.names; // <-- Save the names array
 
             } else if (cardId === 'question-attending') {
                 rsvpData.attending = document.querySelector('input[name="attending"]:checked').value;
-                // If not attending, skip to the last question (notes)
                 if (rsvpData.attending === 'No') {
-                    // Set default values for skipped questions
-                    rsvpData.chocolate = "N/A";
+                    // Set default "N/A" values for all subsequent questions
+                    rsvpData.chocolate = rsvpData.names.map(name => ({ name: name, choice: "N/A" }));
                     rsvpData.wine = "N/A";
-                    rsvpData.mealPreferences = ["N/A"];
-                    // Jump to the notes question (index 4 is meals, index 5 is notes)
-                    currentQuestionIndex = 4;
+                    rsvpData.mealPreferences = rsvpData.names.map(name => ({ name: name, choice: "N/A" }));
+                    currentQuestionIndex = 4; // Skip directly to the notes section
                 }
 
             } else if (cardId === 'question-chocolate') {
-                const checkedBoxes = document.querySelectorAll('input[name="chocolate"]:checked');
-                rsvpData.chocolate = Array.from(checkedBoxes).map(cb => cb.value).join(', ');
+                // Create an array of objects with name and chocolate choices
+                rsvpData.chocolate = [];
+                const chocolateWrappers = document.querySelectorAll('.chocolate-guest-wrapper');
+                chocolateWrappers.forEach(wrapper => {
+                    const guestName = wrapper.dataset.guestName;
+                    const checkedBoxes = wrapper.querySelectorAll('input[type="checkbox"]:checked');
+                    const choices = Array.from(checkedBoxes).map(cb => cb.value).join(', ');
+                    rsvpData.chocolate.push({
+                        name: guestName,
+                        choice: choices || 'None' // Default to 'None' if nothing is selected
+                    });
+                });
 
             } else if (cardId === 'question-wine') {
                 rsvpData.wine = document.querySelector('input[name="wine"]:checked').value;
             
             } else if (cardId === 'question-meal') {
-                const mealInputs = document.querySelectorAll('.meal-preference');
-                rsvpData.mealPreferences = Array.from(mealInputs).map(input => input.value);
+                const mealWrappers = document.querySelectorAll('.guest-meal-wrapper');
+                let allFilled = true;
+                
+                // Create an array of objects with name and choice from the new structure
+                rsvpData.mealPreferences = Array.from(mealWrappers).map(wrapper => {
+                    const nameInput = wrapper.querySelector('.guest-name-input');
+                    const mealInput = wrapper.querySelector('.meal-preference');
+                    
+                    let guestName;
+                    if (nameInput) {
+                        // If there's a name input, use its value, or default to "Guest"
+                        guestName = nameInput.value || 'Guest';
+                    } else {
+                        // Otherwise, get the name from the data attribute
+                        guestName = mealInput.dataset.guestName;
+                    }
+                    
+                    const mealChoice = mealInput.value;
+                    if (!mealChoice) allFilled = false;
+                    
+                    return {
+                        name: guestName,
+                        choice: mealChoice
+                    };
+                });
+
+                if(!allFilled){
+                    alert("Please enter a meal preference for each guest.");
+                    return; 
+                }
             }
 
-            // --- 2. Hide current question, show next ---
+            // Hide current question, show next
             currentCard.classList.add('hidden');
             currentQuestionIndex++;
             const nextCard = questionCards[currentQuestionIndex];
-
-            // --- 3. Prepare the next question (if needed) ---
+            
+            // Dynamically generate inputs for the next question if needed
+            if (nextCard.id === 'question-chocolate') {
+                generateChocolateInputs(rsvpData.names);
+            }
             if (nextCard.id === 'question-meal') {
-                generateMealInputs(rsvpData.guest_count);
+                generateMealInputs(rsvpData.names);
             }
             
             nextCard.classList.remove('hidden');
         }
 
-        function generateMealInputs(count) {
+        function generateChocolateInputs(guestNames) {
+            const container = document.getElementById('chocolate-inputs');
+            if (!container) return; // Safety check
+            container.innerHTML = '';
+
+            const chocolateOptions = [
+                { value: "Dark", label: "Dark Chocolate" },
+                { value: "Milk", label: "Milk Chocolate" },
+                { value: "Caramel", label: "Milk Caramel Sea Salt" },
+                { value: "Almond", label: "Dark Almond Sea Salt" },
+                { value: "None", label: "I'm not a fan" }
+            ];
+
+            guestNames.forEach(name => {
+                const guestWrapper = document.createElement('div');
+                guestWrapper.className = 'chocolate-guest-wrapper';
+                guestWrapper.dataset.guestName = name;
+                guestWrapper.style.marginBottom = '20px';
+                guestWrapper.style.textAlign = 'left';
+
+                const guestLabel = document.createElement('h4');
+                guestLabel.textContent = `${name}'s Choice:`;
+                guestLabel.style.margin = '0 0 10px 0';
+                guestLabel.style.color = '#e6f1ff';
+
+                const checkboxGroup = document.createElement('div');
+                checkboxGroup.className = 'checkbox-group';
+
+                chocolateOptions.forEach(option => {
+                    const label = document.createElement('label');
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.name = `chocolate-${name}`; // Unique name for each group
+                    checkbox.value = option.value;
+                    
+                    label.appendChild(checkbox);
+                    label.appendChild(document.createTextNode(` ${option.label}`));
+                    checkboxGroup.appendChild(label);
+                });
+
+                guestWrapper.appendChild(guestLabel);
+                guestWrapper.appendChild(checkboxGroup);
+                container.appendChild(guestWrapper);
+            });
+        }
+
+        function generateMealInputs(guestNames) {
             const container = document.getElementById('meal-inputs');
-            container.innerHTML = ''; // Clear previous inputs
-            for (let i = 1; i <= count; i++) {
-                const guestLabel = document.createElement('label');
-                guestLabel.textContent = `Guest ${i} Meal Choice:`;
-                guestLabel.style.display = 'block';
-                guestLabel.style.marginTop = '10px';
+            container.innerHTML = '';
+            
+            // Use the provided names to create labels and inputs
+            guestNames.forEach(name => {
+                // Create a wrapper for each guest's inputs
+                const guestWrapper = document.createElement('div');
+                guestWrapper.className = 'guest-meal-wrapper';
+                guestWrapper.style.marginBottom = '15px';
+
+                if (name === "Guest") {
+                    // If the name is "Guest", provide an input for their name
+                    const nameInput = document.createElement('input');
+                    nameInput.type = 'text';
+                    nameInput.placeholder = "Guest's Name";
+                    nameInput.className = 'guest-name-input';
+                    // Apply styles to match other inputs
+                    Object.assign(nameInput.style, {
+                        boxSizing: 'border-box', width: '100%', padding: '10px',
+                        border: '1px solid #304a6e', borderRadius: '5px',
+                        backgroundColor: '#0a192f', color: '#ffffff', fontSize: '1rem', marginBottom: '5px'
+                    });
+
+                    const mealInput = document.createElement('input');
+                    mealInput.type = 'text';
+                    mealInput.placeholder = 'Meal Choice for Guest';
+                    mealInput.className = 'meal-preference';
+                    mealInput.required = true;
+                    Object.assign(mealInput.style, {
+                        boxSizing: 'border-box', width: '100%', padding: '10px',
+                        border: '1px solid #304a6e', borderRadius: '5px',
+                        backgroundColor: '#0a192f', color: '#ffffff', fontSize: '1rem'
+                    });
+
+                    guestWrapper.appendChild(nameInput);
+                    guestWrapper.appendChild(mealInput);
+
+                } else {
+                    // Otherwise, create a static label for the guest's name
+                    const guestLabel = document.createElement('label');
+                    guestLabel.textContent = `${name}'s Meal Choice:`;
+                    Object.assign(guestLabel.style, {
+                        display: 'block', marginTop: '10px', marginBottom: '5px', color: '#ffffff'
+                    });
+                    
+                    const mealInput = document.createElement('input');
+                    mealInput.type = 'text';
+                    mealInput.placeholder = 'e.g., Steak, Salmon, Childrens Chicken';
+                    mealInput.className = 'meal-preference';
+                    mealInput.dataset.guestName = name; // Store the name in a data attribute
+                    mealInput.required = true;
+                    Object.assign(mealInput.style, {
+                        boxSizing: 'border-box', width: '100%', padding: '10px',
+                        border: '1px solid #304a6e', borderRadius: '5px',
+                        backgroundColor: '#0a192f', color: '#ffffff', fontSize: '1rem'
+                    });
+                    
+                    guestWrapper.appendChild(guestLabel);
+                    guestWrapper.appendChild(mealInput);
+                }
                 
-                const input = document.createElement('input');
-                input.type = 'text';
-                input.placeholder = 'e.g., Chicken, Fish, Vegan';
-                input.className = 'meal-preference';
-                input.required = true;
-                
-                container.appendChild(guestLabel);
-                container.appendChild(input);
-            }
+                container.appendChild(guestWrapper);
+            });
         }
 
         function submitRSVP() {
-            // Save the last answer (notes)
             rsvpData.notes = document.getElementById('notes-input').value || "None";
             
             console.log("Final RSVP Data:", rsvpData);
 
-            // Hide the last question
             questionCards[currentQuestionIndex].classList.add('hidden');
-
-            // Show a temporary loading message if needed
             const thankYouSection = document.getElementById('thank-you');
             thankYouSection.classList.remove('hidden');
             thankYouSection.querySelector('p').textContent = "Submitting, please wait...";
 
-            // --- 4. Send data to the backend ---
             fetch('/submit', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
