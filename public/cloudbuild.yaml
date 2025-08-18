@@ -1,0 +1,39 @@
+steps:
+  # 1. Build the container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'us-central1-docker.pkg.dev/$PROJECT_ID/wedding-repo/${_SERVICE_NAME}:latest', '.']
+
+  # 2. Push the container image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'us-central1-docker.pkg.dev/$PROJECT_ID/wedding-repo/${_SERVICE_NAME}:latest']
+
+  # 3. Deploy the container to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    args:
+      - 'run'
+      - 'deploy'
+      - '${_SERVICE_NAME}'
+      - '--image=us-central1-docker.pkg.dev/$PROJECT_ID/wedding-repo/${_SERVICE_NAME}:latest'
+      - '--region'
+      - '${_REGION}'
+      # Attach the custom service account
+      - '--service-account'
+      - '${_SERVICE_ACCOUNT_EMAIL}'
+      # Allow public access to the website
+      - '--allow-unauthenticated'
+    # Use the beta components for service account features
+    entrypoint: gcloud
+
+# Store the pushed image in Artifact Registry
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/wedding-repo/${_SERVICE_NAME}:latest'
+
+# Define substitutions for reusable variables
+substitutions:
+  _SERVICE_NAME: 'wedding-rsvp-service'
+  _REGION: 'us-central1'
+  # IMPORTANT: Replace this with the email of the service account you created
+  _SERVICE_ACCOUNT_EMAIL: 'invite-sa@$PROJECT_ID.iam.gserviceaccount.com'
+
+options:
+  logging: CLOUD_LOGGING_ONLY

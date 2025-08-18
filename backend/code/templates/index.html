@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding RSVP Dashboard</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #343a40; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 2rem; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1, h2 { color: #212529; }
+        table { width: 100%; border-collapse: collapse; margin-top: 25px; }
+        th, td { padding: 12px 15px; border: 1px solid #dee2e6; text-align: left; vertical-align: top; }
+        th { background-color: #4a5766; color: white; font-weight: 600; }
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        .error { color: #dc3545; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 1rem; border-radius: 4px; }
+        .summary { display: flex; gap: 2rem; background-color: #e9ecef; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; }
+        .summary-item { text-align: center; }
+        .summary-item h2 { margin: 0; font-size: 2.5rem; color: #007bff; }
+        .summary-item p { margin: 0; color: #6c757d; text-transform: uppercase; font-size: 0.9rem; }
+        .notes { white-space: pre-wrap; word-break: break-word; }
+        .badge { display: inline-block; padding: .25em .6em; font-size: 75%; font-weight: 700; line-height: 1; text-align: center; white-space: nowrap; vertical-align: baseline; border-radius: .25rem; }
+        .badge-yes { color: #fff; background-color: #28a745; }
+        .badge-no { color: #fff; background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Wedding RSVP Dashboard</h1>
+        <p>Reading data from GCS Bucket: <strong>{{ bucket_name }}</strong></p>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% else %}
+            <div class="summary">
+                <div class="summary-item">
+                    <h2>{{ total_guests }}</h2>
+                    <p>Total Guests Attending</p>
+                </div>
+                <div class="summary-item">
+                    <h2>{{ attending_count }}</h2>
+                    <p>Total Parties Attending</p>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Submitted At (UTC)</th>
+                        <th>Party Name</th>
+                        <th>Attending?</th>
+                        <th>Count</th>
+                        <th>Meal Preferences</th>
+                        <th>Chocolate Choices</th>
+                        <th>Wine</th>
+                        <th>Notes & Songs</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rsvp in rsvps %}
+                    <tr>
+                        <td>{{ rsvp.submission_timestamp_utc.split('.')[0].replace('T', ' ') }}</td>
+                        <td><strong>{{ rsvp.name }}</strong><br><small>({{ rsvp.names | join(', ') }})</small></td>
+                        <td>
+                            {% if rsvp.attending.lower() == 'yes' %}
+                                <span class="badge badge-yes">Yes</span>
+                            {% else %}
+                                <span class="badge badge-no">No</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ rsvp.guest_count }}</td>
+                        <td>
+                            {% for pref in rsvp.mealPreferences %}
+                                <strong>{{ pref.name }}:</strong> {{ pref.choice }}<br>
+                            {% else %}
+                                N/A
+                            {% endfor %}
+                        </td>
+                        <td>
+                             {% for choc in rsvp.chocolate %}
+                                <strong>{{ choc.name }}:</strong> {{ choc.choice }}<br>
+                            {% else %}
+                                N/A
+                            {% endfor %}
+                        </td>
+                        <td>{{ rsvp.wine or 'N/A' }}</td>
+                        <td class="notes">{{ rsvp.notes }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align: center;">No RSVP data found in the bucket.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+</body>
+</html>
