@@ -73,14 +73,15 @@ def get_rsvp_data():
 def normalize_meal_choice(choice):
     """Normalizes meal choices to group similar items using simple fuzzy logic."""
     c = choice.lower().strip()
-    if 'steak' in c or 'beef' in c:
-        return 'Steak / Beef'
+    if 'steak' in c or 'beef' in c or 'ribeye' in c:
+        return 'Grilled Ribeyef'
     if 'fish' in c or 'salmon' in c or 'cod' in c:
-        return 'Fish'
-    if 'chicken' in c:
-        return 'Chicken'
-    if 'veg' in c or 'pasta' in c or 'gnocchi' in c:
-        return 'Vegetarian'
+        return 'Grilled Alaskan Salmon'
+    if 'veg' in c or 'roasted butternut squash' in c or 'gnocchi' in c:
+        return 'Roasted Butternut Squash'
+    if 'childrens menu' in c or 'pasta' in c or 'breaded' in c or 'tomato' in c or 'pasta' in c or 'chicken' in c:
+        return 'Childrens Menu'
+
     # Capitalize any other choices for consistent display
     return choice.strip().capitalize()
 
