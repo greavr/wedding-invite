@@ -198,6 +198,11 @@
                 <label><input type="radio" name="attending" value="Yes" checked> Yes, with pleasure!</label>
                 <label><input type="radio" name="attending" value="No"> No, we'll be celebrating from afar.</label>
             </div>
+            <div id="attending-count-wrapper" style="margin-top: 20px;">
+                <label for="attending-count" style="color: #e6f1ff;">Number Attending:</label>
+                <input type="number" id="attending-count" name="attending-count" min="1" 
+                       style="width: 70px; padding: 8px; margin-left: 10px; background-color: #0a192f; color: #ffffff; border: 1px solid #304a6e; border-radius: 5px; font-size: 1rem;">
+            </div>
             <button onclick="nextQuestion()">Next</button>
         </div>
         
@@ -205,8 +210,7 @@
             <h2>What kind of chocolate do you enjoy?</h2>
             <p>Please select choices for each member of your party.</p>
             <div id="chocolate-inputs" style="margin-bottom: 20px;">
-                <!-- JavaScript will generate content here -->
-            </div>
+                </div>
             <button onclick="nextQuestion()">Next</button>
         </div>
 
@@ -291,6 +295,18 @@
         // --- Autocomplete Setup ---
         const nameInput = document.getElementById('name-input');
         const resultsContainer = document.getElementById('autocomplete-results');
+        
+        // --- Event Listener for Attending Radio Buttons ---
+        document.querySelectorAll('input[name="attending"]').forEach(radio => {
+            radio.addEventListener('change', (event) => {
+                const countWrapper = document.getElementById('attending-count-wrapper');
+                if (event.target.value === 'Yes') {
+                    countWrapper.classList.remove('hidden');
+                } else {
+                    countWrapper.classList.add('hidden');
+                }
+            });
+        });
 
         // --- Fetch Guest List and Setup Autocomplete ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -353,11 +369,33 @@
                 document.getElementById('name-error').classList.add('hidden');
                 rsvpData.name = selectedGuest.name;
                 rsvpData.guest_count = selectedGuest.guest_count;
-                rsvpData.names = selectedGuest.names; // <-- Save the names array
+                rsvpData.names = selectedGuest.names;
+
+                // Set up the attending count input for the next screen
+                const attendingCountInput = document.getElementById('attending-count');
+                attendingCountInput.value = rsvpData.guest_count;
+                attendingCountInput.max = rsvpData.guest_count;
+                document.getElementById('attending-count-wrapper').classList.remove('hidden');
 
             } else if (cardId === 'question-attending') {
                 rsvpData.attending = document.querySelector('input[name="attending"]:checked').value;
-                if (rsvpData.attending === 'No') {
+                
+                if (rsvpData.attending === 'Yes') {
+                    const attendingCountInput = document.getElementById('attending-count');
+                    const attendingCount = parseInt(attendingCountInput.value, 10);
+
+                    if (isNaN(attendingCount) || attendingCount < 1 || attendingCount > rsvpData.guest_count) {
+                        alert(`Please enter a valid number of guests between 1 and ${rsvpData.guest_count}.`);
+                        return; // Prevent moving to the next question
+                    }
+                    rsvpData.attending_count = attendingCount;
+                    // Slice the names array to match the number of people actually attending
+                    rsvpData.attending_names = rsvpData.names.slice(0, attendingCount);
+
+                } else { // Attending is 'No'
+                    rsvpData.attending_count = 0;
+                    rsvpData.attending_names = []; // No one is attending
+                    
                     // Set default "N/A" values for all subsequent questions
                     rsvpData.chocolate = rsvpData.names.map(name => ({ name: name, choice: "N/A" }));
                     rsvpData.wine = "N/A";
@@ -420,15 +458,16 @@
             currentQuestionIndex++;
             const nextCard = questionCards[currentQuestionIndex];
             
-            // Dynamically generate inputs for the next question if needed
-            if (nextCard.id === 'question-chocolate') {
-                generateChocolateInputs(rsvpData.names);
+            if (nextCard) {
+                // Dynamically generate inputs for the next question if needed
+                if (nextCard.id === 'question-chocolate') {
+                    generateChocolateInputs(rsvpData.attending_names);
+                }
+                if (nextCard.id === 'question-meal') {
+                    generateMealInputs(rsvpData.attending_names);
+                }
+                nextCard.classList.remove('hidden');
             }
-            if (nextCard.id === 'question-meal') {
-                generateMealInputs(rsvpData.names);
-            }
-            
-            nextCard.classList.remove('hidden');
         }
 
         function generateChocolateInputs(guestNames) {
