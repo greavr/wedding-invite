@@ -18,7 +18,7 @@ steps:
       - '${_REGION}'
       # Attach the custom service account
       - '--service-account'
-      - '${_SERVICE_ACCOUNT_EMAIL}'
+      - 'invite-sa@$PROJECT_ID.iam.gserviceaccount.com'
       # Allow public access to the website
       - '--allow-unauthenticated'
     # Use the beta components for service account features
@@ -26,14 +26,12 @@ steps:
 
 # Store the pushed image in Artifact Registry
 images:
-  - 'us-west1-docker.pkg.dev/$PROJECT_ID/wedding-repo/${_SERVICE_NAME}:latest'
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/wedding-repo/${_SERVICE_NAME}:latest'
 
 # Define substitutions for reusable variables
 substitutions:
   _SERVICE_NAME: 'wedding-count-service'
   _REGION: 'us-west1'
-  # IMPORTANT: Replace this with the email of the service account you created
-  _SERVICE_ACCOUNT_EMAIL: 'invite-sa@$PROJECT_ID.iam.gserviceaccount.com'
 
 options:
   logging: CLOUD_LOGGING_ONLY

@@ -14,7 +14,6 @@ SITE_PASSWORD = 'Indy'
 
 def check_auth(username, password):
     """Checks if the provided password is correct."""
-    # We don't care about the username for this simple auth
     return password and password.lower() == SITE_PASSWORD.lower()
 
 def authenticate():
@@ -35,9 +34,7 @@ def requires_auth(f):
     return decorated
 # --- END: Password Protection ---
 
-
 # IMPORTANT: Set your GCS bucket name from an environment variable
-# Example -> export GCS_BUCKET_NAME="your-actual-bucket-name"
 GCS_BUCKET_NAME = os.environ.get('GCS_BUCKET_NAME','prodapp1-214321-wedding-rsvp')
 
 def get_rsvp_data():
@@ -50,47 +47,45 @@ def get_rsvp_data():
     storage_client = storage.Client()
     bucket = storage_client.bucket(GCS_BUCKET_NAME)
     blobs = bucket.list_blobs()
-
     latest_rsvps = {}
-
     for blob in blobs:
-        # Process only .json files
         if not blob.name.lower().endswith('.json'):
             continue
-
         try:
             content = blob.download_as_text()
             data = json.loads(content)
-
-            # Ensure the JSON has the required keys for processing
             if 'name' not in data or 'submission_timestamp_utc' not in data:
                 print(f"Skipping {blob.name}: missing 'name' or 'submission_timestamp_utc'.")
                 continue
-
             rsvp_name = data['name']
-            # Parse the UTC timestamp string into a datetime object for comparison
             current_timestamp = datetime.fromisoformat(data['submission_timestamp_utc'].replace('Z', '+00:00'))
-
-            # If we've already seen an RSVP from this person, check if the current one is newer.
-            # Otherwise, add it to our dictionary.
             if rsvp_name not in latest_rsvps or current_timestamp > latest_rsvps[rsvp_name]['_timestamp_obj']:
-                data['_timestamp_obj'] = current_timestamp  # Add datetime object for sorting
+                data['_timestamp_obj'] = current_timestamp
                 latest_rsvps[rsvp_name] = data
-
         except json.JSONDecodeError:
             print(f"Warning: Could not decode JSON from blob: {blob.name}")
         except Exception as e:
             print(f"An unexpected error occurred while processing {blob.name}: {e}")
-
-    # Convert the dictionary of latest RSVPs back into a list
     final_rsvp_list = list(latest_rsvps.values())
-
-    # Sort the final list by the timestamp in descending order (latest first)
     return sorted(final_rsvp_list, key=lambda x: x['_timestamp_obj'], reverse=True)
 
+# NEW: Helper function for meal normalization
+def normalize_meal_choice(choice):
+    """Normalizes meal choices to group similar items using simple fuzzy logic."""
+    c = choice.lower().strip()
+    if 'steak' in c or 'beef' in c:
+        return 'Steak / Beef'
+    if 'fish' in c or 'salmon' in c or 'cod' in c:
+        return 'Fish'
+    if 'chicken' in c:
+        return 'Chicken'
+    if 'veg' in c or 'pasta' in c or 'gnocchi' in c:
+        return 'Vegetarian'
+    # Capitalize any other choices for consistent display
+    return choice.strip().capitalize()
 
 @app.route('/')
-@requires_auth  # This decorator protects the page
+@requires_auth
 def index():
     """
     Main route to display the RSVP dashboard.
@@ -99,13 +94,32 @@ def index():
     rsvps = []
     attending_count = 0
     total_guests = 0
+    # NEW: Dictionaries to hold the new counts
+    meal_counts = {}
+    chocolate_counts = {}
 
     try:
         rsvps = get_rsvp_data()
-        # Calculate summary counts for guests who are attending
         attending_rsvps = [r for r in rsvps if r.get('attending', '').lower() == 'yes']
+        
         attending_count = len(attending_rsvps)
-        total_guests = sum(r.get('guest_count', 0) for r in attending_rsvps)
+        total_guests = sum(r.get('attending_count', 0) for r in attending_rsvps)
+
+        # NEW: Logic to count meals and chocolates for attending guests
+        for rsvp in attending_rsvps:
+            # Count meal preferences with normalization
+            for meal_pref in rsvp.get('mealPreferences', []):
+                choice = meal_pref.get('choice')
+                if choice:
+                    normalized_meal = normalize_meal_choice(choice)
+                    meal_counts[normalized_meal] = meal_counts.get(normalized_meal, 0) + 1
+            
+            # Count chocolate choices
+            for choc_pref in rsvp.get('chocolate', []):
+                choice = choc_pref.get('choice')
+                if choice:
+                    choc_choice = choice.strip().capitalize()
+                    chocolate_counts[choc_choice] = chocolate_counts.get(choc_choice, 0) + 1
 
     except Exception as e:
         error_message = f"An error occurred: {e}"
@@ -117,9 +131,11 @@ def index():
         error=error_message,
         bucket_name=GCS_BUCKET_NAME or "Not Configured",
         total_guests=total_guests,
-        attending_count=attending_count
+        attending_count=attending_count,
+        # NEW: Pass new counts to the template
+        meal_counts=meal_counts,
+        chocolate_counts=chocolate_counts
     )
 
 if __name__ == '__main__':
-    # The app will run on http://localhost:8080
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)), debug=True)

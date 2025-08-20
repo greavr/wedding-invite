@@ -18,7 +18,7 @@ steps:
       - '${_REGION}'
       # Attach the custom service account
       - '--service-account'
-      - '${_SERVICE_ACCOUNT_EMAIL}'
+      - 'invite-sa@$PROJECT_ID.iam.gserviceaccount.com'
       # Allow public access to the website
       - '--allow-unauthenticated'
     # Use the beta components for service account features
@@ -31,9 +31,7 @@ images:
 # Define substitutions for reusable variables
 substitutions:
   _SERVICE_NAME: 'wedding-rsvp-service'
-  _REGION: 'us-central1'
-  # IMPORTANT: Replace this with the email of the service account you created
-  _SERVICE_ACCOUNT_EMAIL: 'invite-sa@$PROJECT_ID.iam.gserviceaccount.com'
+  _REGION: 'us-west1'
 
 options:
   logging: CLOUD_LOGGING_ONLY
