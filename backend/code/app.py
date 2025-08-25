@@ -74,7 +74,7 @@ def normalize_meal_choice(choice):
     """Normalizes meal choices to group similar items using simple fuzzy logic."""
     c = choice.lower().strip()
     if 'steak' in c or 'beef' in c or 'ribeye' in c:
-        return 'Grilled Ribeyef'
+        return 'Grilled Ribeye'
     if 'fish' in c or 'salmon' in c or 'cod' in c:
         return 'Grilled Alaskan Salmon'
     if 'veg' in c or 'roasted butternut squash' in c or 'gnocchi' in c:
